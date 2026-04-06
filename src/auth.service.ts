@@ -5,7 +5,7 @@ export function createJwt(userId: number): string {
     return jwt.sign({userId}, process.env.JWT_SECRET!)
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
     const authHeader: string | undefined = req.headers?.authorization
     if (!authHeader) {
         res.status(401).end()

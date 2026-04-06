@@ -12,7 +12,12 @@ export async function createFriendRequest(from: number, to: number): Promise<voi
     await pool.query(query, [from, to])
 }
 
-export async function setFriendRequestStatus(id: number, accepted: boolean): Promise<{ from: number, to: number }> {
+export type FriendRequestUsers = {
+    from: number,
+    to: number,
+}
+
+export async function setFriendRequestStatus(id: number, accepted: boolean): Promise<FriendRequestUsers> {
     const query = `update friend_request
                    set status = $2
                    where id = $1
