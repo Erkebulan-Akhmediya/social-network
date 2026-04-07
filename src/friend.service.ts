@@ -49,7 +49,12 @@ export type WaitingFriendRequest = {
     createdAt: Date
 }
 
-export async function getWaitingFriendRequests(to: number): Promise<WaitingFriendRequest[]> {
+export type PaginationOptions = {
+    page: number,
+    size: number
+}
+
+export async function getWaitingFriendRequests(to: number, {page, size}: PaginationOptions): Promise<WaitingFriendRequest[]> {
     const query = `select fr.id,
                           fr.created_at,
                           jsonb_build_object(
@@ -59,8 +64,9 @@ export async function getWaitingFriendRequests(to: number): Promise<WaitingFrien
                    from friend_request fr
                             left join "user" u on fr."from" = u.id
                    where "to" = $1
-                     and status = 'waiting'`
-    const {rows} = await pool.query(query, [to])
+                     and status = 'waiting'
+                   offset $2 limit $3`
+    const {rows} = await pool.query(query, [to, page * size, size])
     return rows.map(((row): WaitingFriendRequest => ({
         id: row.id,
         from: row.from,
@@ -85,7 +91,7 @@ export type Friend = {
     username: string
 }
 
-export async function getFriends(userId: number): Promise<Friend[]> {
+export async function getFriends(userId: number, {page, size}: PaginationOptions): Promise<Friend[]> {
     const query = `select case
                               when f.user1 = $1 then u2.id
                               else u1.id
@@ -98,7 +104,8 @@ export async function getFriends(userId: number): Promise<Friend[]> {
                             left join "user" u1 on f.user1 = u1.id
                             left join "user" u2 on f.user2 = u2.id
                    where user1 = $1
-                      or user2 = $1`
-    const {rows} = await pool.query(query, [userId])
+                      or user2 = $1
+                   offset $2 limit $3`
+    const {rows} = await pool.query(query, [userId, page * size, size])
     return rows
 }

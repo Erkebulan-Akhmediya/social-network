@@ -39,7 +39,19 @@ export async function createRequest(req: Request, res: Response): Promise<void> 
 export async function listRequests(req: Request, res: Response): Promise<void> {
     try {
         const {userId} = req as any
-        const friendReqs: WaitingFriendRequest[] = await getWaitingFriendRequests(userId)
+        const {page: pageParam, size: sizeParam} = req.query
+        let page: number, size: number
+        if (typeof pageParam === 'string') {
+            page = parseInt(pageParam)
+        } else {
+            page = 0
+        }
+        if (typeof sizeParam === 'string') {
+            size = parseInt(sizeParam)
+        } else {
+            size = 100
+        }
+        const friendReqs: WaitingFriendRequest[] = await getWaitingFriendRequests(userId, {page, size})
         res.json(friendReqs)
     } catch (e) {
         console.error(e);
@@ -81,7 +93,19 @@ export async function requestReply(req: Request, res: Response): Promise<void> {
 export async function listFriends(req: Request, res: Response): Promise<void> {
     try {
         const {userId} = req as any
-        const friends: Friend[] = await getFriends(userId)
+        const {page: pageParam, size: sizeParam} = req.query
+        let page: number, size: number
+        if (typeof pageParam === 'string') {
+            page = parseInt(pageParam)
+        } else {
+            page = 0
+        }
+        if (typeof sizeParam === 'string') {
+            size = parseInt(sizeParam)
+        } else {
+            size = 100
+        }
+        const friends: Friend[] = await getFriends(userId, {page, size})
         res.json(friends)
     } catch (e) {
         console.error(e);
