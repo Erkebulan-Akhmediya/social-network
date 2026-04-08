@@ -12,7 +12,7 @@ export async function signUp(req: Request, res: Response): Promise<void> {
             return
         }
         await createUser(username, password)
-        res.status(201).end()
+        res.status(201).json({message: 'Congrats! You have successfully signed up'})
     } catch (e) {
         console.error(e);
         res.status(500).end()

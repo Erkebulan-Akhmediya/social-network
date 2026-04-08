@@ -34,7 +34,7 @@ export async function createRequest(req: Request, res: Response): Promise<void> 
             return
         }
         await createFriendRequest(from, to)
-        res.status(201).end();
+        res.status(201).json({message: 'Friend request created'});
     } catch (e) {
         console.error(e);
         if (e instanceof z.ZodError) {
@@ -85,7 +85,9 @@ export async function requestReply(req: Request, res: Response): Promise<void> {
         const {from, to} = await setFriendRequestStatus(friendReqId, accepted)
         if (accepted)
             await addFriend(from, to)
-        res.status(200).end()
+        res.json({
+            message: `The friend request has been ${accepted ? 'accepted' : 'rejected'}`
+        })
     } catch (e) {
         console.error(e);
         if (e instanceof z.ZodError) {
