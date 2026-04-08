@@ -31,3 +31,18 @@ export async function getById(req: Request, res: Response): Promise<void> {
         res.status(500).end();
     }
 }
+
+export async function whoami(req: Request, res: Response): Promise<void> {
+    try {
+        const {userId} = req as any
+        const [user] = await getUsers({id: userId})
+        if (!user) {
+            res.status(404).json({error: 'User not found'});
+            return
+        }
+        res.json(user)
+    } catch (e) {
+        console.error(e);
+        res.status(500).end();
+    }
+}
