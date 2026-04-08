@@ -74,6 +74,17 @@ export async function getWaitingFriendRequests(to: number, {page, size}: Paginat
     })))
 }
 
+export async function deleteWaitingFriendRequest(friendReqId: number, from: number): Promise<number> {
+    const query = `delete
+                   from friend_request
+                   where id = $1
+                     and "from" = $2
+                     and status = 'waiting'`
+    const {rowCount} = await pool.query(query, [friendReqId, from])
+    return rowCount ?? 0
+
+}
+
 export async function addFriend(user1id: number, user2id: number): Promise<void> {
     const query = `insert into friends (user1, user2)
                    values ($1, $2)`
