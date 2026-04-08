@@ -1,25 +1,30 @@
 import type {Request, Response} from 'express';
 import {getUsers, User} from "./user.service";
+import * as z from 'zod'
 
 export async function search(req: Request, res: Response): Promise<void> {
+    const searchSchema = z.object({
+        username: z.coerce.string()
+    })
     try {
-        const {username} = req.query;
-        const users: User[] = await getUsers({username: String(username)});
+        const {username} = searchSchema.parse(req.query);
+        const users: User[] = await getUsers({username});
         res.json(users)
     } catch (e) {
         console.error(e);
+        if (e instanceof z.ZodError) {
+            res.status(400).json({error: z.prettifyError(e)})
+        }
         res.status(500).end();
     }
 }
 
 export async function getById(req: Request, res: Response): Promise<void> {
+    const getByIdSchema = z.object({
+        id: z.coerce.number()
+    })
     try {
-        const {id: idParam} = req.params;
-        if (!idParam || Array.isArray(idParam)) {
-            res.status(400).send({error: 'Invalid user id'});
-            return
-        }
-        const id: number = parseInt(idParam)
+        const {id} = getByIdSchema.parse(req.params)
         const [user] = await getUsers({id})
         if (!user) {
             res.status(404).send({error: 'User not found'});
@@ -28,6 +33,9 @@ export async function getById(req: Request, res: Response): Promise<void> {
         res.json(user)
     } catch (e) {
         console.error(e);
+        if (e instanceof z.ZodError) {
+            res.status(400).json({error: z.prettifyError(e)})
+        }
         res.status(500).end();
     }
 }
