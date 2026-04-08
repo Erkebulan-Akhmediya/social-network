@@ -36,7 +36,7 @@ export type FriendRequestExistsOptions = {
 
 export async function friendRequestExists(options?: FriendRequestExistsOptions): Promise<boolean> {
     let innerQuery = 'select id from friend_request'
-    const { whereClause, args } = buildWhereClause(options)
+    const {whereClause, args} = buildWhereClause(options)
     innerQuery += whereClause
     const outerQuery = `select exists(${innerQuery})`
     const {rows: [{exists}]} = await pool.query(outerQuery, args)
@@ -119,4 +119,13 @@ export async function getFriends(userId: number, {page, size}: PaginationOptions
                    offset $2 limit $3`
     const {rows} = await pool.query(query, [userId, page * size, size])
     return rows
+}
+
+export async function deleteFriend(user1id: number, user2id: number): Promise<number> {
+    const query = `delete
+                   from friends
+                   where (user1 = $1 and user2 = $2)
+                      or (user1 = $2 and user2 = $1)`
+    const {rowCount} = await pool.query(query, [user1id, user2id])
+    return rowCount ?? 0
 }

@@ -1,7 +1,7 @@
 import type {Request, Response} from 'express';
 import {
     addFriend,
-    createFriendRequest, deleteWaitingFriendRequest,
+    createFriendRequest, deleteFriend, deleteWaitingFriendRequest,
     Friend,
     friendExists,
     friendRequestExists,
@@ -127,6 +127,29 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
         const {page, size} = paginationSchema.parse(req.query)
         const friends: Friend[] = await getFriends(userId, {page, size})
         res.json(friends)
+    } catch (e) {
+        console.error(e);
+        if (e instanceof z.ZodError) {
+            res.status(400).send({error: z.prettifyError(e)})
+            return
+        }
+        res.status(500).end()
+    }
+}
+
+export async function deleteFriendById(req: Request, res: Response): Promise<void> {
+    const deleteFriendSchema = z.object({
+        id: z.coerce.number()
+    })
+    try {
+        const {userId} = req as any
+        const {id: friendId} = deleteFriendSchema.parse(req.params)
+        const rowsDeleted: number = await deleteFriend(userId, friendId)
+        if (rowsDeleted === 0) {
+            res.status(400).send({error: 'The user is not your friend'})
+            return
+        }
+        res.json({message: 'successfully deleted the friend'})
     } catch (e) {
         console.error(e);
         if (e instanceof z.ZodError) {

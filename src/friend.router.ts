@@ -1,10 +1,12 @@
 import {Router} from "express";
 import {authMiddleware} from "./auth.service";
-import {createRequest, requestReply, listRequests, listFriends, deleteFriendRequest} from "./friend.controller";
+import {createRequest, requestReply, listRequests, listFriends, deleteFriendRequest, deleteFriendById} from "./friend.controller";
 
 const router = Router();
 
 router.get('/', authMiddleware, listFriends);
+router.delete('/:id', authMiddleware, deleteFriendById)
+
 router.post('/request', authMiddleware, createRequest)
 router.get('/request', authMiddleware, listRequests)
 router.post('/request/:id/reply', authMiddleware, requestReply)
