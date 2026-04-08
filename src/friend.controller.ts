@@ -11,10 +11,15 @@ import {
     setFriendRequestStatus,
     WaitingFriendRequest
 } from "./friend.service";
+import * as z from 'zod'
+import {paginationSchema} from "./utils";
 
 export async function createRequest(req: Request, res: Response): Promise<void> {
+    const createRequestSchema = z.object({
+        userId: z.coerce.number()
+    })
     try {
-        const {userId: to} = req.body
+        const {userId: to} = createRequestSchema.parse(req.body)
         const {userId: from} = req as any
         if (from === to) {
             res.status(400).send({error: 'Cannot send a request to yourself'})
@@ -32,6 +37,10 @@ export async function createRequest(req: Request, res: Response): Promise<void> 
         res.status(201).end();
     } catch (e) {
         console.error(e);
+        if (e instanceof z.ZodError) {
+            res.status(400).send({error: z.prettifyError(e)})
+            return
+        }
         res.status(500).end();
     }
 }
@@ -39,37 +48,30 @@ export async function createRequest(req: Request, res: Response): Promise<void> 
 export async function listRequests(req: Request, res: Response): Promise<void> {
     try {
         const {userId} = req as any
-        const {page: pageParam, size: sizeParam} = req.query
-        let page: number, size: number
-        if (typeof pageParam === 'string') {
-            page = parseInt(pageParam)
-        } else {
-            page = 0
-        }
-        if (typeof sizeParam === 'string') {
-            size = parseInt(sizeParam)
-        } else {
-            size = 100
-        }
+        const {page, size} = paginationSchema.parse(req.query)
         const friendReqs: WaitingFriendRequest[] = await getWaitingFriendRequests(userId, {page, size})
         res.json(friendReqs)
     } catch (e) {
         console.error(e);
+        if (e instanceof z.ZodError) {
+            res.status(400).send({error: z.prettifyError(e)})
+            return
+        }
         res.status(500).end()
     }
 }
 
 export async function requestReply(req: Request, res: Response): Promise<void> {
+    const requestReplySchema = z.object({
+        query: z.object({
+            accepted: z.coerce.boolean().default(false),
+        }),
+        params: z.object({
+            id: z.coerce.number().nonnegative()
+        })
+    })
     try {
-        const {acceptedParam} = req.query
-        const accepted: boolean = acceptedParam === 'false' ? false : Boolean(acceptedParam)
-
-        let {id: friendReqIdParam} = req.params
-        if (!friendReqIdParam || Array.isArray(friendReqIdParam)) {
-            res.status(404).end();
-            return;
-        }
-        const friendReqId: number = parseInt(friendReqIdParam)
+        const {query: {accepted}, params: {id: friendReqId}} = requestReplySchema.parse(req)
 
         const friendRequestIsWaiting: boolean = await friendRequestExists({
             id: friendReqId,
@@ -86,6 +88,10 @@ export async function requestReply(req: Request, res: Response): Promise<void> {
         res.status(200).end()
     } catch (e) {
         console.error(e);
+        if (e instanceof z.ZodError) {
+            res.status(400).send({error: z.prettifyError(e)})
+            return
+        }
         res.status(500).end();
     }
 }
@@ -93,22 +99,15 @@ export async function requestReply(req: Request, res: Response): Promise<void> {
 export async function listFriends(req: Request, res: Response): Promise<void> {
     try {
         const {userId} = req as any
-        const {page: pageParam, size: sizeParam} = req.query
-        let page: number, size: number
-        if (typeof pageParam === 'string') {
-            page = parseInt(pageParam)
-        } else {
-            page = 0
-        }
-        if (typeof sizeParam === 'string') {
-            size = parseInt(sizeParam)
-        } else {
-            size = 100
-        }
+        const {page, size} = paginationSchema.parse(req.query)
         const friends: Friend[] = await getFriends(userId, {page, size})
         res.json(friends)
     } catch (e) {
         console.error(e);
+        if (e instanceof z.ZodError) {
+            res.status(400).send({error: z.prettifyError(e)})
+            return
+        }
         res.status(500).end()
     }
 }
