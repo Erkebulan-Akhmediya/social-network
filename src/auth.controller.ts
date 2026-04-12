@@ -1,21 +1,23 @@
 import type {Request, Response} from "express";
 import {createUser, getUsers} from "./user.service";
 import bcrypt from "bcrypt";
-import {createJwt} from "./auth.service";
+import {createJwt, sendConfirmationEmail} from "./auth.service";
 import * as z from "zod";
 
 export async function signUp(req: Request, res: Response): Promise<void> {
     const signUpSchema = z.object({
         username: z.string(),
         password: z.string(),
+        email: z.email()
     })
     try {
-        const {username, password} = signUpSchema.parse(req.body)
+        const {username, password, email} = signUpSchema.parse(req.body)
         const {length: userCount} = await getUsers({username})
         if (userCount > 0) {
             res.status(400).json({error: "Username already exists"})
             return
         }
+        await sendConfirmationEmail(email)
         await createUser(username, password)
         res.status(201).json({message: 'Congrats! You have successfully signed up'})
     } catch (e) {

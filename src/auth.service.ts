@@ -1,5 +1,6 @@
 import * as jwt from 'jsonwebtoken';
 import type {Request, Response, NextFunction} from "express";
+import {emailTransport} from "./utils";
 
 export function createJwt(userId: number): string {
     return jwt.sign({userId}, process.env.JWT_SECRET!)
@@ -19,4 +20,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     const {userId} = jwt.verify(token, process.env.JWT_SECRET!) as {userId: number}
     (req as any).userId = userId
     next()
+}
+
+export async function sendConfirmationEmail(email: string): Promise<void> {
+    emailTransport.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Confirmation',
+        text: 'Confirm your email',
+    })
 }
